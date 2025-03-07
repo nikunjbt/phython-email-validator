@@ -1,0 +1,36 @@
+import pandas as pd
+import smtplib
+import dns.resolver
+from google.colab import files
+import io
+
+        domain = email.split('@')[-1]
+
+        # Get the MX record for the domain
+        mx_records = dns.resolver.resolve(domain, 'MX')
+        mx_record = str(mx_records[0].exchange)
+
+        # Connect to the mail server
+        server = smtplib.SMTP(mx_record)
+        server.set_debuglevel(0)
+        server.helo()
+        server.mail('me@mydomain.com')  # Replace with your real sender email
+        code, _ = server.rcpt(email)
+        server.quit()
+
+        # If the response code is 250, the email exists
+        return "Valid" if code == 250 else "Invalid"
+    except Exception as e:
+        return "Invalid"
+
+# Validate emails and add a new column
+df["Status"] = df["Email"].apply(verify_email)
+
+# Save results to a new CSV
+output_file = "validated_emails.csv"
+df.to_csv(output_file, index=False)
+
+# Provide download link
+files.download(output_file)
+
+print(f"Validation complete! Download your results from {output_file}")
